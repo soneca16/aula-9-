@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Simples</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        padding: 20px;
+    }
+    .chat-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .chat-message {
+        background-color: #f1f0f0;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 6px;
+    }
+    .user-message {
+        background-color: #d3e3fc;
+        align-self: flex-end;
+    }
+    .chat-form {
+        display: flex;
+        margin-top: 20px;
+    }
+    .chat-form input[type="text"] {
+        flex: 1;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px 0 0 4px;
+        outline: none;
+    }
+    .chat-form button {
+        padding: 10px 20px;
+        font-size: 16px;
+        border: 1px solid #007bff;
+        background-color: #007bff;
+        color: #fff;
+        border-radius: 0 4px 4px 0;
+        cursor: pointer;
+        outline: none;
+    }
+    .chat-form button:hover {
+        background-color: #0056b3;
+    }
+    .voice-button {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #28a745;
+        color: #fff;
+        border: 1px solid #28a745;
+        border-radius: 4px;
+        margin-left: 10px;
+        cursor: pointer;
+        outline: none;
+    }
+    .voice-button:hover {
+        background-color: #218838;
+        border-color: #218838;
+    }
+</style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-message user-message">
+        Olá! Digite uma mensagem para começar o chat.
+    </div>
+    <div id="chat-messages"></div>
+    <form id="message-form" class="chat-form">
+        <input type="text" id="user-input" placeholder="Digite sua mensagem...">
+        <button type="submit">Enviar</button>
+        <button type="button" id="voice-button" class="voice-button">Microfone</button>
+    </form>
+</div>
+<!-- Inclua o script da biblioteca Sentiment.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sentiment/2.1.0/sentiment.min.js"></script>
+
+<script>
+    const messageForm = document.getElementById('message-form');
+    const userInput = document.getElementById('user-input');
+    const chatMessages = document.getElementById('chat-messages');
+    const voiceButton = document.getElementById('voice-button');
+
+    messageForm.addEventListener('submit', function(event) {
+        event.preventDefault(); // Evita o recarregamento da página
+
+        const userMessage = userInput.value.trim();
+        if (userMessage !== '') {
+            appendMessage('user', userMessage);
+            
+            userInput.value = ''; // Limpa o campo de entrada após enviar
+        }
+    });
+     voiceButton.addEventListener('click', function() {
+        startSpeechToText();
+    });
+
+    function startSpeechToText() {
+        // Verifica se o navegador suporta o reconhecimento de fala
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+
+            recognition.lang = 'pt-BR'; // Define o idioma para português do Brasil, ajuste conforme necessário
+
+            recognition.onstart = function() {
+                console.log('Iniciando reconhecimento de fala...');
+                voiceButton.textContent = 'Escutando...';
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                userInput.value = transcript;
+                appendMessage('user', transcript);
+                voiceButton.textContent = 'Microfone';
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Erro no reconhecimento de fala:', event.error);
+                voiceButton.textContent = 'Microfone';
+            };
+
+            recognition.onend = function() {
+                console.log('Reconhecimento de fala encerrado.');
+                voiceButton.textContent = 'Microfone';
+                userInput.value = ''; // Limpa o campo de entrada após enviar
+            };
+
+            recognition.start();
+        } else {
+            alert('O reconhecimento de fala não é suportado neste navegador.');
+        }
+    }
+    function appendMessage(sender, message) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('chat-message');
+        const synth = window.speechSynthesis;
+        const utterance = new SpeechSynthesisUtterance(message);
+        synth.speak(utterance);
+
+        if (sender === 'user') {
+            messageElement.classList.add('user-message');
+            
+        }
+
+        messageElement.innerText = message;
+        chatMessages.appendChild(messageElement);
+
+        // Rolagem automática para a última mensagem
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
